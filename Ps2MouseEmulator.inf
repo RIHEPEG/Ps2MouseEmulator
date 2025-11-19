@@ -1,62 +1,30 @@
-;
-; Ps2MouseEmulator.inf
-;
-
 [Version]
-Signature   = "$WINDOWS NT$"
-Class       = System ; TODO: specify appropriate Class
-ClassGuid   = {4d36e97d-e325-11ce-bfc1-08002be10318} ; TODO: specify appropriate ClassGuid
-Provider    = %ManufacturerName%
-CatalogFile = Ps2MouseEmulator.cat
-DriverVer   = ; TODO: set DriverVer in stampinf property pages
-PnpLockdown = 1
-
-[DestinationDirs]
-DefaultDestDir = 13
-
-[SourceDisksNames]
-1 = %DiskName%,,,""
-
-[SourceDisksFiles]
-Ps2MouseEmulator.sys = 1,,
-
-;*****************************************
-; Install Section
-;*****************************************
+Signature="$WINDOWS NT$"
+Class=System
+Provider=%ManufacturerName%
+DriverVer=01/01/2024,1.0.0.0
+CatalogFile=MyDriver.cat
 
 [Manufacturer]
-%ManufacturerName% = Standard,NT$ARCH$.10.0...16299 ; %13% support introduced in build 16299
+%ManufacturerName%=Standard,NTamd64
 
-[Standard.NT$ARCH$.10.0...16299]
-%Ps2MouseEmulator.DeviceDesc% = Ps2MouseEmulator_Device, Root\Ps2MouseEmulator ; TODO: edit hw-id
+[Standard.NTamd64]
+%DeviceDescription%=InstallSection, USB\VID_xxxx&PID_yyyy
 
-[Ps2MouseEmulator_Device.NT]
-CopyFiles = File_Copy
+[InstallSection]
+CopyFiles=DriverCopyFiles
+AddReg=AddRegistryEntries
 
-[File_Copy]
-Ps2MouseEmulator.sys
+[DriverCopyFiles]
+MyDriver.sys
 
-;-------------- Service installation
-[Ps2MouseEmulator_Device.NT.Services]
-AddService = Ps2MouseEmulator,%SPSVCINST_ASSOCSERVICE%, Ps2MouseEmulator_Service_Inst
+[DestinationDirs]
+DefaultDestDir=12 ; System32\Drivers
 
-; -------------- Ps2MouseEmulator driver install sections
-[Ps2MouseEmulator_Service_Inst]
-DisplayName    = %Ps2MouseEmulator.SVCDESC%
-ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
-StartType      = 3               ; SERVICE_DEMAND_START
-ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
-ServiceBinary  = %13%\Ps2MouseEmulator.sys
-
-[Ps2MouseEmulator_Device.NT.Wdf]
-KmdfService = Ps2MouseEmulator, Ps2MouseEmulator_wdfsect
-
-[Ps2MouseEmulator_wdfsect]
-KmdfLibraryVersion = $KMDFVERSION$
+[AddRegistryEntries]
+HKR,,DevLoader,,*ntkern
+HKR,,NTMPDriver,,MyDriver.sys
 
 [Strings]
-SPSVCINST_ASSOCSERVICE = 0x00000002
-ManufacturerName = "<Your manufacturer name>" ;TODO: Replace with your manufacturer name
-DiskName = "Ps2MouseEmulator Installation Disk"
-Ps2MouseEmulator.DeviceDesc = "Ps2MouseEmulator Device"
-Ps2MouseEmulator.SVCDESC = "Ps2MouseEmulator Service"
+ManufacturerName="Your Company Name"
+DeviceDescription="PS/2 Mouse Emulator"

@@ -1,0 +1,22 @@
+#ifndef _DEVICE_TMH_
+#define _DEVICE_TMH_
+
+#include <ntddk.h>
+
+// Minimal tracing stubs to allow building without WPP-generated .tmh
+#ifndef TRACE_LEVEL_ERROR
+#define TRACE_LEVEL_ERROR 1
+#endif
+
+#ifndef TRACE_DRIVER
+#define TRACE_DRIVER 0
+#endif
+
+#ifndef TraceEvents
+// Map TraceEvents to DbgPrintEx for minimal kernel logging during build
+// Parameters: TraceEvents(Level, Component, Format, ...)
+#define TraceEvents(_Level, _Component, _Format, ...) \
+    DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, _Format "\n", __VA_ARGS__)
+#endif
+
+#endif // _DEVICE_TMH_

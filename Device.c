@@ -1,61 +1,212 @@
-#pragma once
+#include "Driver.h"
+#include "device.tmh"
 
-#include <wdm.h>
-#include <wdf.h>
-#include <usb.h>
-#include <usbdlib.h>
-#include <wdfusb.h>
+// Define GUID in a single C file to avoid multiple-definition errors
 #include <initguid.h>
-
-// Уникальный GUID для интерфейса устройства
 DEFINE_GUID(GUID_DEVINTERFACE_PS2_MOUSE_EMULATOR,
     0x12345678, 0xABCD, 0xEF01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF, 0x01);
 
-// Структура контекста устройства
-typedef struct _DEVICE_CONTEXT
+// If GUID_DEVINTERFACE_PS2_MOUSE_EMULATOR is defined elsewhere, this extern will match it.
+extern const GUID GUID_DEVINTERFACE_PS2_MOUSE_EMULATOR;
+
+#ifdef ALLOC_PRAGMA
+#pragma alloc_text (PAGE, Ps2MouseEmulatorCreateDevice)
+#pragma alloc_text (PAGE, Ps2MouseEmulatorEvtDevicePrepareHardware)
+#pragma alloc_text (PAGE, Ps2MouseEmulatorEvtDeviceRemove)
+#pragma alloc_text (PAGE, Ps2MouseEmulatorEvtDeviceSurpriseRemoval)
+#pragma alloc_text (PAGE, Ps2MouseEmulatorEvtDeviceReleaseHardware)
+#pragma alloc_text (PAGE, Ps2MouseEmulatorEvtDeviceDxStateEntry)
+#pragma alloc_text (PAGE, Ps2MouseEmulatorEvtDeviceDxStateExit)
+#pragma alloc_text (PAGE, Ps2MouseEmulatorEvtDeviceWakeFromSx)
+#pragma alloc_text (PAGE, Ps2MouseEmulatorEvtDeviceWakeFromSxTrigger)
+#pragma alloc_text (PAGE, Ps2MouseEmulatorEvtDeviceArmWakeFromSx)
+#pragma alloc_text (PAGE, Ps2MouseEmulatorEvtDeviceDisarmWakeFromSx)
+#pragma alloc_text (PAGE, Ps2MouseEmulatorEvtDeviceEnableWakeAtBus)
+#pragma alloc_text (PAGE, Ps2MouseEmulatorEvtDeviceDisableWakeAtBus)
+#endif
+
+NTSTATUS
+Ps2MouseEmulatorCreateDevice(
+    _Inout_ PWDFDEVICE_INIT DeviceInit
+)
 {
-    WDFUSBDEVICE UsbDevice;
-    ULONG PrivateDeviceData;
-} DEVICE_CONTEXT, * PDEVICE_CONTEXT;
+    WDF_PNPPOWER_EVENT_CALLBACKS pnpPowerCallbacks;
+    WDF_OBJECT_ATTRIBUTES deviceAttributes;
+    PDEVICE_CONTEXT deviceContext;
+    WDFDEVICE device;
+    NTSTATUS status;
 
-// Макрос для безопасного получения контекста устройства
-WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(DEVICE_CONTEXT, DeviceGetContext)
+    PAGED_CODE();
 
-// Внешние объявления функций драйвера
-EXTERN_C_START
+    WDF_PNPPOWER_EVENT_CALLBACKS_INIT(&pnpPowerCallbacks);
 
-// Основные callback-функции драйвера
-DRIVER_INITIALIZE DriverEntry;
-EVT_WDF_DRIVER_DEVICE_ADD Ps2MouseEmulatorEvtDeviceAdd;
-EVT_WDF_OBJECT_CONTEXT_CLEANUP Ps2MouseEmulatorEvtDriverContextCleanup;
-EVT_WDF_DRIVER_UNLOAD Ps2MouseEmulatorEvtDriverUnload;
+    // Only set callbacks that exist in this WDF_PNPPOWER_EVENT_CALLBACKS version.
+    pnpPowerCallbacks.EvtDevicePrepareHardware = Ps2MouseEmulatorEvtDevicePrepareHardware;
 
-// Callback-функции устройства
-EVT_WDF_DEVICE_PREPARE_HARDWARE Ps2MouseEmulatorEvtDevicePrepareHardware;
-EVT_WDF_DEVICE_REMOVE Ps2MouseEmulatorEvtDeviceRemove;
-EVT_WDF_DEVICE_SURPRISE_REMOVAL Ps2MouseEmulatorEvtDeviceSurpriseRemoval;
-EVT_WDF_DEVICE_RELEASE_HARDWARE Ps2MouseEmulatorEvtDeviceReleaseHardware;
-EVT_WDF_DEVICE_SELF_MANAGED_IO_INIT Ps2MouseEmulatorEvtDeviceSelfManagedIoInit;
-EVT_WDF_DEVICE_SELF_MANAGED_IO_CLEANUP Ps2MouseEmulatorEvtDeviceSelfManagedIoCleanup;
+    WdfDeviceInitSetPnpPowerEventCallbacks(DeviceInit, &pnpPowerCallbacks);
 
-// Энергосберегающие callback-функции
-EVT_WDF_DEVICE_DX_STATE_ENTRY Ps2MouseEmulatorEvtDeviceDxStateEntry;
-EVT_WDF_DEVICE_DX_STATE_EXIT Ps2MouseEmulatorEvtDeviceDxStateExit;
-EVT_WDF_DEVICE_WAKE_FROM_SX Ps2MouseEmulatorEvtDeviceWakeFromSx;
-EVT_WDF_DEVICE_WAKE_FROM_SX_TRIGGER Ps2MouseEmulatorEvtDeviceWakeFromSxTrigger;
-EVT_WDF_DEVICE_ARM_WAKE_FROM_SX Ps2MouseEmulatorEvtDeviceArmWakeFromSx;
-EVT_WDF_DEVICE_DISARM_WAKE_FROM_SX Ps2MouseEmulatorEvtDeviceDisarmWakeFromSx;
-EVT_WDF_DEVICE_ENABLE_WAKE_AT_BUS Ps2MouseEmulatorEvtDeviceEnableWakeAtBus;
-EVT_WDF_DEVICE_DISABLE_WAKE_AT_BUS Ps2MouseEmulatorEvtDeviceDisableWakeAtBus;
+    WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&deviceAttributes, DEVICE_CONTEXT);
 
-// Обработчики ввода-вывода
-EVT_WDF_IO_QUEUE_IO_DEFAULT Ps2MouseEmulatorEvtIoDefault;
-EVT_WDF_IO_QUEUE_IO_READ Ps2MouseEmulatorEvtIoRead;
-EVT_WDF_IO_QUEUE_IO_WRITE Ps2MouseEmulatorEvtIoWrite;
-EVT_WDF_IO_QUEUE_IO_DEVICE_CONTROL Ps2MouseEmulatorEvtIoDeviceControl;
-EVT_WDF_IO_QUEUE_IO_INTERNAL_DEVICE_CONTROL Ps2MouseEmulatorEvtIoInternalDeviceControl;
+    status = WdfDeviceCreate(DeviceInit, &deviceAttributes, &device);
 
-// Инициализация очередей ввода-вывода
-NTSTATUS Ps2MouseEmulatorQueueInitialize(WDFDEVICE Device);
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR, TRACE_DRIVER, "WdfDeviceCreate failed with status 0x%x", status);
+        return status;
+    }
 
-EXTERN_C_END
+    deviceContext = DeviceGetContext(device);
+    deviceContext->PrivateDeviceData = 0;
+
+    status = WdfDeviceCreateDeviceInterface(
+        device,
+        &GUID_DEVINTERFACE_PS2_MOUSE_EMULATOR,
+        NULL // ReferenceString
+    );
+
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR, TRACE_DRIVER, "WdfDeviceCreateDeviceInterface failed with status 0x%x", status);
+        return status;
+    }
+
+    status = Ps2MouseEmulatorQueueInitialize(device);
+
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR, TRACE_DRIVER, "Ps2MouseEmulatorQueueInitialize failed with status 0x%x", status);
+        return status;
+    }
+
+    return STATUS_SUCCESS;
+}
+
+// Остальные функции (PrepareHardware, Remove, SurpriseRemoval и т.д.) реализуются аналогичным образом
+
+// Добавление определения обработчика PrepareHardware, чтобы устранить ошибку "identifier not defined"
+NTSTATUS
+Ps2MouseEmulatorEvtDevicePrepareHardware(
+    WDFDEVICE Device,
+    WDFCMRESLIST ResourcesRaw,
+    WDFCMRESLIST ResourcesTranslated
+)
+{
+    PAGED_CODE();
+
+    UNREFERENCED_PARAMETER(Device);
+    UNREFERENCED_PARAMETER(ResourcesRaw);
+    UNREFERENCED_PARAMETER(ResourcesTranslated);
+
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "Ps2MouseEmulatorEvtDevicePrepareHardware called");
+
+    // TODO: Инициализация оборудования PS/2 мыши (если требуется)
+
+    return STATUS_SUCCESS;
+}
+
+// Minimal stubs for other callbacks declared in Device.h to satisfy references.
+VOID
+Ps2MouseEmulatorEvtDeviceSurpriseRemoval(
+    WDFDEVICE Device
+)
+{
+    UNREFERENCED_PARAMETER(Device);
+    TraceEvents(TRACE_LEVEL_WARNING, TRACE_DEVICE, "Ps2MouseEmulatorEvtDeviceSurpriseRemoval called");
+}
+
+NTSTATUS
+Ps2MouseEmulatorEvtDeviceReleaseHardware(
+    WDFDEVICE Device,
+    WDFCMRESLIST ResourcesTranslated
+)
+{
+    UNREFERENCED_PARAMETER(Device);
+    UNREFERENCED_PARAMETER(ResourcesTranslated);
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "Ps2MouseEmulatorEvtDeviceReleaseHardware called");
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS
+Ps2MouseEmulatorEvtDeviceSelfManagedIoInit(
+    WDFDEVICE Device
+)
+{
+    UNREFERENCED_PARAMETER(Device);
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "Ps2MouseEmulatorEvtDeviceSelfManagedIoInit called");
+    return STATUS_SUCCESS;
+}
+
+VOID
+Ps2MouseEmulatorEvtDeviceSelfManagedIoCleanup(
+    WDFDEVICE Device
+)
+{
+    UNREFERENCED_PARAMETER(Device);
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "Ps2MouseEmulatorEvtDeviceSelfManagedIoCleanup called");
+}
+
+VOID
+Ps2MouseEmulatorEvtIoDefault(
+    WDFQUEUE Queue,
+    WDFREQUEST Request
+)
+{
+    UNREFERENCED_PARAMETER(Queue);
+    UNREFERENCED_PARAMETER(Request);
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "Ps2MouseEmulatorEvtIoDefault called");
+    WdfRequestComplete(Request, STATUS_SUCCESS);
+}
+
+VOID
+Ps2MouseEmulatorEvtIoDeviceControl(
+    WDFQUEUE Queue,
+    WDFREQUEST Request,
+    size_t OutputBufferLength,
+    size_t InputBufferLength,
+    ULONG IoControlCode
+)
+{
+    UNREFERENCED_PARAMETER(Queue);
+    UNREFERENCED_PARAMETER(OutputBufferLength);
+    UNREFERENCED_PARAMETER(InputBufferLength);
+    UNREFERENCED_PARAMETER(IoControlCode);
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "Ps2MouseEmulatorEvtIoDeviceControl called");
+    WdfRequestComplete(Request, STATUS_SUCCESS);
+}
+
+VOID
+Ps2MouseEmulatorEvtIoInternalDeviceControl(
+    WDFQUEUE Queue,
+    WDFREQUEST Request,
+    size_t OutputBufferLength,
+    size_t InputBufferLength,
+    ULONG IoControlCode
+)
+{
+    UNREFERENCED_PARAMETER(Queue);
+    UNREFERENCED_PARAMETER(OutputBufferLength);
+    UNREFERENCED_PARAMETER(InputBufferLength);
+    UNREFERENCED_PARAMETER(IoControlCode);
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "Ps2MouseEmulatorEvtIoInternalDeviceControl called");
+    WdfRequestComplete(Request, STATUS_SUCCESS);
+}
+
+// Driver-level callbacks
+
+VOID
+Ps2MouseEmulatorEvtDriverContextCleanup(
+    WDFOBJECT DriverObject
+)
+{
+    UNREFERENCED_PARAMETER(DriverObject);
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "Ps2MouseEmulatorEvtDriverContextCleanup called");
+}
+
+VOID
+Ps2MouseEmulatorEvtDriverUnload(
+    _In_ WDFDRIVER Driver
+)
+{
+    UNREFERENCED_PARAMETER(Driver);
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "Ps2MouseEmulatorEvtDriverUnload called");
+}
