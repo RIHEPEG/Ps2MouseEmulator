@@ -2,7 +2,7 @@
   "configurations": [
     {
       "inheritEnvironments": [
-        "msvc_x64"
+        "msvc_x64_x64"
       ],
       "name": "x64-Debug",
       "includePath": [
@@ -18,7 +18,10 @@
         "_M_AMD64",
         "_WIN64"
       ],
-      "intelliSenseMode": "windows-msvc-x64"
+      "intelliSenseMode": "windows-msvc-x64",
+      "compilerPath": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.34.31933\\bin\\Hostx64\\x64\\cl.exe",
+      "cStandard": "c17",
+      "cppStandard": "c++17"
     }
   ]
 }

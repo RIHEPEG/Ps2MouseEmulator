@@ -1,22 +1,26 @@
 [Version]
 Signature="$WINDOWS NT$"
 Class=System
+ClassGUID={4D36E97D-E325-11CE-BFC1-08002BE10318}
 Provider=%ManufacturerName%
 DriverVer=01/01/2024,1.0.0.0
 CatalogFile=MyDriver.cat
+PnpLockdown=1
 
 [Manufacturer]
 %ManufacturerName%=Standard,NTamd64
 
 [Standard.NTamd64]
 %DeviceDescription%=InstallSection, USB\VID_xxxx&PID_yyyy
+Characteristics=0x80000000 ; CS_DESIGNATED_INIT
 
 [InstallSection]
 CopyFiles=DriverCopyFiles
 AddReg=AddRegistryEntries
+AddService=MyDriver,,MyDriver.Service
 
 [DriverCopyFiles]
-MyDriver.sys
+MyDriver.sys,1
 
 [DestinationDirs]
 DefaultDestDir=12 ; System32\Drivers
@@ -25,6 +29,21 @@ DefaultDestDir=12 ; System32\Drivers
 HKR,,DevLoader,,*ntkern
 HKR,,NTMPDriver,,MyDriver.sys
 
+[MyDriver.Service]
+DisplayName    = "PS/2 Mouse Emulator Service"
+ServiceBinary  = %12%\MyDriver.sys
+ServiceType    = 1 ; SERVICE_KERNEL_DRIVER
+StartType      = 1 ; SERVICE_BOOT_START
+ErrorControl   = 1 ; SERVICE_ERROR_NORMAL
+
+[SourceDisksNames]
+1 = %DiskName%,,
+
+[SourceDisksFiles]
+MyDriver.sys = 1
+
 [Strings]
 ManufacturerName="Your Company Name"
 DeviceDescription="PS/2 Mouse Emulator"
+ServiceName="PS/2 Mouse Emulator Service"
+DiskName="PS/2 Mouse Emulator Installation Disk"
