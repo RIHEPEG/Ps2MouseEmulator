@@ -1,5 +1,17 @@
 #include "Driver.h"
-#include "queue.tmh"
+#if defined(__has_include)
+#  if __has_include("queue.tmh")
+#    include "queue.tmh"
+#  else
+#    define WPP_INIT_TRACING(DriverObject, RegistryPath)
+#    define WPP_CLEANUP(DriverObject)
+#  endif
+#elif defined(EVENT_TRACING)
+#  include "queue.tmh"
+#else
+#  define WPP_INIT_TRACING(DriverObject, RegistryPath)
+#  define WPP_CLEANUP(DriverObject)
+#endif
 
 NTSTATUS
 Ps2MouseEmulatorQueueInitialize(

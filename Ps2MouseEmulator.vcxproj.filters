@@ -26,6 +26,9 @@
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="Sources.sources" />
+    <None Include=".editorconfig" />
+    <None Include="queue.tmh" />
+    <None Include="Directory.Build.props" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Queue.c">

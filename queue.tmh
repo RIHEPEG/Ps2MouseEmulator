@@ -1,0 +1,18 @@
+/* Minimal stub for queue.tmh to satisfy includes when WPP-generated header is missing.
+   This file prevents C1083 ("queue.tmh: No such file or directory") during build.
+   Replace with the real WPP-generated header when WPP trace preprocessing is used.
+*/
+
+#ifndef _QUEUE_TMH_
+#define _QUEUE_TMH_
+
+/* Если в проекте не используется WPP/TracePreprocessor, обеспечим безопасные заглушки. */
+#ifndef WPP_INIT_TRACING
+#define WPP_INIT_TRACING(DriverObject, RegistryPath) ((void)0)
+#endif
+
+#ifndef WPP_CLEANUP
+#define WPP_CLEANUP(DriverObject) ((void)0)
+#endif
+
+#endif /* _QUEUE_TMH_ */

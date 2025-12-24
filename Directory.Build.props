@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <!-- Disable Inf2Cat signability test for local builds. Remove this file for release builds. -->
+    <RunInf2Cat>false</RunInf2Cat>
+  </PropertyGroup>
+</Project>

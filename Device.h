@@ -9,40 +9,40 @@
 // GUID is defined in a single C file to avoid multiple-definition link errors
 extern const GUID GUID_DEVINTERFACE_PS2_MOUSE_EMULATOR;
 
-// Структура контекста устройства
+// РЎС‚СЂСѓРєС‚СѓСЂР° РєРѕРЅС‚РµРєСЃС‚Р° СѓСЃС‚СЂРѕР№СЃС‚РІР°
 typedef struct _DEVICE_CONTEXT
 {
     WDFUSBDEVICE UsbDevice;
     ULONG PrivateDeviceData;
 } DEVICE_CONTEXT, * PDEVICE_CONTEXT;
 
-// Макрос для безопасного получения контекста устройства
+// РњР°РєСЂРѕСЃ РґР»СЏ Р±РµР·РѕРїР°СЃРЅРѕРіРѕ РїРѕР»СѓС‡РµРЅРёСЏ РєРѕРЅС‚РµРєСЃС‚Р° СѓСЃС‚СЂРѕР№СЃС‚РІР°
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(DEVICE_CONTEXT, DeviceGetContext)
 
-// Внешние объявления функций драйвера
+// Р’РЅРµС€РЅРёРµ РѕР±СЉСЏРІР»РµРЅРёСЏ С„СѓРЅРєС†РёР№ РґСЂР°Р№РІРµСЂР°
 EXTERN_C_START
 
-// Основные callback-функции драйвера
+// РћСЃРЅРѕРІРЅС‹Рµ callback-С„СѓРЅРєС†РёРё РґСЂР°Р№РІРµСЂР°
 DRIVER_INITIALIZE DriverEntry;
 EVT_WDF_DRIVER_DEVICE_ADD Ps2MouseEmulatorEvtDeviceAdd;
 EVT_WDF_OBJECT_CONTEXT_CLEANUP Ps2MouseEmulatorEvtDriverContextCleanup;
 EVT_WDF_DRIVER_UNLOAD Ps2MouseEmulatorEvtDriverUnload;
 
-// Callback-функции устройства
+// Callback-С„СѓРЅРєС†РёРё СѓСЃС‚СЂРѕР№СЃС‚РІР°
 EVT_WDF_DEVICE_PREPARE_HARDWARE Ps2MouseEmulatorEvtDevicePrepareHardware;
 EVT_WDF_DEVICE_SURPRISE_REMOVAL Ps2MouseEmulatorEvtDeviceSurpriseRemoval;
 EVT_WDF_DEVICE_RELEASE_HARDWARE Ps2MouseEmulatorEvtDeviceReleaseHardware;
 EVT_WDF_DEVICE_SELF_MANAGED_IO_INIT Ps2MouseEmulatorEvtDeviceSelfManagedIoInit;
 EVT_WDF_DEVICE_SELF_MANAGED_IO_CLEANUP Ps2MouseEmulatorEvtDeviceSelfManagedIoCleanup;
 
-// Обработчики ввода-вывода
+// РћР±СЂР°Р±РѕС‚С‡РёРєРё РІРІРѕРґР°-РІС‹РІРѕРґР°
 EVT_WDF_IO_QUEUE_IO_DEFAULT Ps2MouseEmulatorEvtIoDefault;
 EVT_WDF_IO_QUEUE_IO_READ Ps2MouseEmulatorEvtIoRead;
 EVT_WDF_IO_QUEUE_IO_WRITE Ps2MouseEmulatorEvtIoWrite;
 EVT_WDF_IO_QUEUE_IO_DEVICE_CONTROL Ps2MouseEmulatorEvtIoDeviceControl;
 EVT_WDF_IO_QUEUE_IO_INTERNAL_DEVICE_CONTROL Ps2MouseEmulatorEvtIoInternalDeviceControl;
 
-// Инициализация очередей ввода-вывода
-NTSTATUS Ps2MouseEmulatorQueueInitialize(WDFDEVICE Device);
+// РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РѕС‡РµСЂРµРґРµР№ РІРІРѕРґР°-РІС‹РІРѕРґР°
+NTSTATUS Ps2MouseEmulatorQueueInitialize(_In_ WDFDEVICE Device);
 
 EXTERN_C_END

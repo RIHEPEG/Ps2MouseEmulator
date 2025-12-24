@@ -1,10 +1,10 @@
 [Version]
 Signature="$WINDOWS NT$"
-Class=System
-ClassGUID={4D36E97D-E325-11CE-BFC1-08002BE10318}
+Class=USB
+ClassGUID={36fc9e60-c465-11cf-8056-444553540000}
 Provider=%ManufacturerName%
-DriverVer=10/20/2024,16.50.12.200
-CatalogFile=MyDriver.cat
+DriverVer=01/01/2000,1.0.0.0
+CatalogFile=Ps2MouseEmulator.cat
 PnpLockdown=1
 
 [Manufacturer]
@@ -12,38 +12,40 @@ PnpLockdown=1
 
 [Standard.NTamd64]
 %DeviceDescription%=InstallSection, USB\VID_1234&PID_5678
-Characteristics=0x80000000 ; CS_DESIGNATED_INIT
 
 [InstallSection]
 CopyFiles=DriverCopyFiles
 AddReg=AddRegistryEntries
-AddService=MyDriver,,MyDriver.Service
+
+[InstallSection.Services]
+AddService=%ServiceName%,0x00000002,MyDriver
 
 [DriverCopyFiles]
-MyDriver.sys,1
+Ps2MouseEmulator.sys
 
 [DestinationDirs]
 DefaultDestDir=12 ; System32\Drivers
 
 [AddRegistryEntries]
 HKR,,DevLoader,,*ntkern
-HKR,,NTMPDriver,,MyDriver.sys
+HKR,,NTMPDriver,,Ps2MouseEmulator.sys
 
-[MyDriver.Service]
-DisplayName    = "PS/2 Mouse Emulator Service"
-ServiceBinary  = %12%\MyDriver.sys
+[MyDriver]
+DisplayName    = %ServiceDisplayName%
+ServiceBinary  = %12%\Ps2MouseEmulator.sys
 ServiceType    = 1 ; SERVICE_KERNEL_DRIVER
 StartType      = 1 ; SERVICE_BOOT_START
 ErrorControl   = 1 ; SERVICE_ERROR_NORMAL
 
 [SourceDisksNames]
-1 = %DiskName%,,
+1 = %DiskName%,
 
 [SourceDisksFiles]
-MyDriver.sys = 1
+Ps2MouseEmulator.sys = 1
 
 [Strings]
 ManufacturerName="YourCompanyNameHere"
 DeviceDescription="PS/2 Mouse Emulator"
-ServiceName="PS/2 Mouse Emulator Service"
+ServiceName="Ps2MouseEmulator"
+ServiceDisplayName="PS/2 Mouse Emulator Service"
 DiskName="PS/2 Mouse Emulator Installation Disk"
